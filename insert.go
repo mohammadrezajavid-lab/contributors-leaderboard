@@ -3,24 +3,24 @@ package main
 import (
 	"context"
 	"fmt"
+	"golang.project/go-fundamentals/leaderboard-poc-code/adapter"
 	"golang.project/go-fundamentals/leaderboard-poc-code/keys"
 	"golang.project/go-fundamentals/leaderboard-poc-code/timettl"
 	"math/rand"
 	"sync"
 	"time"
-
-	"github.com/redis/go-redis/v9"
 )
 
 var ctx = context.Background()
 var projects = []string{"project1", "project2", "project3", "project4", "project5"}
 var timeframes = []string{"year", "month", "week"}
-var rdb = redis.NewClient(&redis.Options{
+var rdb = adapter.NewRedisAdapter(adapter.Config{
 	Network:  "tcp",
-	Addr:     "localhost:6379",
+	Host:     "127.0.0.1",
+	Port:     6379,
 	Password: "password1999",
 	DB:       0,
-})
+}).GetClient()
 
 func main() {
 	InsertData()
