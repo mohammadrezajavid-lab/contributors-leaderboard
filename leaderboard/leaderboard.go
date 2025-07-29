@@ -49,8 +49,8 @@ func NewLeaderboardModel(
 	}
 }
 
-func (m leaderboard) RunLeaderboard() {
-	p := tea.NewProgram(m)
+func (l leaderboard) RunLeaderboard() {
+	p := tea.NewProgram(l)
 	if err := p.Start(); err != nil {
 		fmt.Printf("Error: %v\n", err)
 	}
@@ -62,60 +62,61 @@ func tick(timeRefresh time.Duration) tea.Cmd {
 	})
 }
 
-func (m leaderboard) Init() tea.Cmd {
-	return tea.Batch(tick(m.leaderboardTimeRefresh), m.loadData())
+func (l leaderboard) Init() tea.Cmd {
+	return tea.Batch(tick(l.leaderboardTimeRefresh), l.loadData())
 }
 
-func (m leaderboard) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (l leaderboard) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tickMsg:
-		return m, tea.Batch(tick(m.leaderboardTimeRefresh), m.loadData())
+		return l, tea.Batch(tick(l.leaderboardTimeRefresh), l.loadData())
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "ctrl+c", "q":
-			return m, tea.Quit
+			return l, tea.Quit
 		case "left":
-			if m.projectIndex > 0 {
-				m.projectIndex--
+			if l.projectIndex > 0 {
+				l.projectIndex--
 			}
-			return m, m.loadData()
+			return l, l.loadData()
 		case "right":
-			if m.projectIndex < len(m.projects)-1 {
-				m.projectIndex++
+			if l.projectIndex < len(l.projects)-1 {
+				l.projectIndex++
 			}
-			return m, m.loadData()
+			return l, l.loadData()
 		case "up":
-			if m.timeIndex > 0 {
-				m.timeIndex--
+			if l.timeIndex > 0 {
+				l.timeIndex--
 			}
-			return m, m.loadData()
+			return l, l.loadData()
 		case "down":
-			if m.timeIndex < len(m.timeframes)-1 {
-				m.timeIndex++
+			if l.timeIndex < len(l.timeframes)-1 {
+				l.timeIndex++
 			}
-			return m, m.loadData()
+			return l, l.loadData()
 		}
 	case []table.Row:
-		m.table.SetRows(msg)
+		l.table.SetRows(msg)
 	}
 
 	var cmd tea.Cmd
-	m.table, cmd = m.table.Update(msg)
-	return m, cmd
+	l.table, cmd = l.table.Update(msg)
+	return l, cmd
 }
 
-func (m leaderboard) View() string {
-	project := m.projects[m.projectIndex]
-	timeframe := m.timeframes[m.timeIndex]
+func (l leaderboard) View() string {
+	project := l.projects[l.projectIndex]
+	timeframe := l.timeframes[l.timeIndex]
 
-	header := lipgloss.NewStyle().Bold(true).Render(fmt.Sprintf("Leaderboard - %s / %s (Use ← → for project, ↑ ↓ for timeframe, q to quit)", project, timeframe))
-	return header + "\n" + m.table.View()
+	header := lipgloss.NewStyle().Bold(true).Render(fmt.Sprintf("Leaderboard - %s / %s (Use ← → for project,"+
+		" ↑ ↓ for timeframe, q to quit, (pgdn, pgup) for scrole leaderboard)", project, timeframe))
+	return header + "\n" + l.table.View()
 }
 
-func (m leaderboard) loadData() tea.Cmd {
+func (l leaderboard) loadData() tea.Cmd {
 	ctx := context.Background()
-	project := m.projects[m.projectIndex]
-	timeframe := m.timeframes[m.timeIndex]
+	project := l.projects[l.projectIndex]
+	timeframe := l.timeframes[l.timeIndex]
 
 	var period string
 	switch timeframe {
@@ -135,7 +136,7 @@ func (m leaderboard) loadData() tea.Cmd {
 	}
 
 	return func() tea.Msg {
-		data, err := m.redisClient.ZRevRangeWithScores(ctx, redisKey, 0, -1).Result()
+		data, err := l.redisClient.ZRevRangeWithScores(ctx, redisKey, 0, -1).Result()
 		if err != nil {
 			return []table.Row{{"Error", "-", "-"}}
 		}
