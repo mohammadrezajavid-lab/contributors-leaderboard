@@ -1,0 +1,27 @@
+services:
+  redis-db:
+    image: redis/redis-stack:latest
+    container_name: leaderboard_redis
+    ports:
+      - "6379:6379"
+      - "8001:8001"
+    environment:
+      - REDIS_ARGS=--requirepass password1999 --appendonly yes
+    healthcheck:
+      test: [ "CMD", "redis-cli", "-a", "password1999", "ping" ]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    restart: always
+    volumes:
+      - redis_data:/data
+    networks:
+      - leaderboard-app
+
+volumes:
+  redis_data:
+    driver: local
+
+networks:
+  leaderboard-app:
+    driver: bridge
